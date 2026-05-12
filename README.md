@@ -34,6 +34,16 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### Ubah Isi File .env
+```
+TMDB_API_KEY=masukkan_api_disini
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
+AWS_DEFAULT_REGION=us-east-1
+MINISTACK_ENDPOINT=http://localhost:4566
+```
+Ganti teks "masukkan_api_disini" dengan TMDB API Key yang tertera di user manual
+
 ### Jalankan Aplikasi
 ```bash
 # Terminal 1 — jalankan MiniStack
