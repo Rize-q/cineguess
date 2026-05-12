@@ -42,7 +42,7 @@ AWS_SECRET_ACCESS_KEY=test
 AWS_DEFAULT_REGION=us-east-1
 MINISTACK_ENDPOINT=http://localhost:4566
 ```
-Ganti teks "masukkan_api_disini" dengan TMDB API Key yang tertera di user manual
+Ganti teks `"masukkan_api_disini"` dengan TMDB API Key yang tertera di user manual atau bisa menggunakan API Key anda sendriri
 
 ### Jalankan Aplikasi
 ```bash
