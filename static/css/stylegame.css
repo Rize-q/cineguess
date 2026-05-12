@@ -1,0 +1,416 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --accent: #e8c547;
+      --accent2: #e85d47;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --success: #47e89a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(232,197,71,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 100%, rgba(232,93,71,0.06) 0%, transparent 60%);
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      text-decoration: none;
+      font-size: 2rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+    .logo span { color: var(--accent2); }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-left: 2rem;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--text); }
+    nav a.active { color: var(--accent); }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+
+    /* Game layout */
+    .game-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+
+    /* Poster column */
+    .poster-col { position: sticky; top: 2rem; }
+
+    .poster-wrap {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      aspect-ratio: 2/3;
+    }
+
+    .poster-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: filter 0.8s ease;
+    }
+
+    .poster-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.4);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      transition: opacity 0.5s;
+    }
+
+    .clue-counter {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.4rem;
+      justify-content: center;
+    }
+
+    .clue-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .clue-dot.active { background: var(--accent); }
+    .clue-dot.used { background: var(--muted); }
+
+    /* Clues column */
+    .clues-col {}
+
+    .game-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+    }
+
+    .game-sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Clue cards */
+    .clues-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .clue-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.2s;
+    }
+
+    .clue-card.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .clue-card.locked {
+      opacity: 0.3;
+      border-style: dashed;
+    }
+
+    .clue-icon {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .clue-body {}
+
+    .clue-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .clue-value {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    /* Reveal button */
+    .reveal-btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      margin-bottom: 1.5rem;
+    }
+    .reveal-btn:hover { background: var(--accent); color: #000; }
+    .reveal-btn:disabled {
+      border-color: var(--border);
+      color: var(--muted);
+      cursor: not-allowed;
+      background: transparent;
+    }
+
+    /* Guess input */
+    .guess-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .guess-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .name-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--muted); }
+
+    .guess-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    button.submit-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    button.submit-btn:hover { opacity: 0.85; }
+    button.submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Result overlay */
+    #result-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #result-overlay.show { display: flex; }
+
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 3rem;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .result-emoji { font-size: 4rem; margin-bottom: 1rem; }
+
+    .result-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-title.win { color: var(--success); }
+    .result-title.lose { color: var(--accent2); }
+
+    .result-movie {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      color: var(--accent);
+      margin: 1rem 0;
+    }
+
+    .result-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
+
+    .result-btns { display: flex; gap: 0.75rem; justify-content: center; }
+
+    .result-btns button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-play-again { background: var(--accent); color: #000; }
+    .btn-leaderboard { background: transparent; border: 1px solid var(--border) !important; color: var(--text); }
+
+    /* Leaderboard panel */
+    #leaderboard-panel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #leaderboard-panel.show { display: flex; }
+
+    .lb-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 480px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .lb-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+      color: var(--accent);
+    }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .lb-row:last-child { border-bottom: none; }
+
+    .lb-rank {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      color: var(--muted);
+      width: 30px;
+      flex-shrink: 0;
+    }
+    .lb-rank.top { color: var(--accent); }
+
+    .lb-name { flex: 1; font-weight: 500; font-size: 0.9rem; }
+    .lb-clues { color: var(--muted); font-size: 0.8rem; }
+    .lb-score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      color: var(--accent);
+    }
+
+    .close-btn {
+      margin-top: 1.5rem;
+      width: 100%;
+      padding: 0.75rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+    }
+    .close-btn:hover { border-color: var(--muted); }
+
+    /* Feedback */
+    .feedback {
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      min-height: 1.2rem;
+      transition: color 0.2s;
+    }
+    .feedback.wrong { color: var(--accent2); }
+    .feedback.correct { color: var(--success); }

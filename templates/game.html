@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CineGuess — Play</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="{{ url_for ('static', filename='css/stylegame.css' )}}"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <div>
+        <a href="/" class="logo">Cine<span>Guess</span></a>
+      </div>
+      <nav>
+        <a href="/">Admin</a>
+        <a href="/game" class="active">Play Game</a>
+        <a
+          href="#"
+          onclick="
+            openLeaderboard();
+            return false;
+          "
+          >Leaderboard</a
+        >
+      </nav>
+    </header>
+
+    <main>
+      <div class="game-layout">
+        <!-- Poster -->
+        <div class="poster-col">
+          <div class="poster-wrap">
+            <img
+              id="poster-img"
+              src="/poster/{{ movie.movie_id }}/blurred"
+              alt="Mystery Movie"
+              style="filter: blur(30px) brightness(0.5)"
+            />
+            <div class="poster-overlay" id="poster-overlay">
+              🎬 MYSTERY FILM
+            </div>
+          </div>
+          <div class="clue-counter" id="clue-dots">
+            <div class="clue-dot active" id="dot-0"></div>
+            <div class="clue-dot" id="dot-1"></div>
+            <div class="clue-dot" id="dot-2"></div>
+            <div class="clue-dot" id="dot-3"></div>
+            <div class="clue-dot" id="dot-4"></div>
+            <div class="clue-dot" id="dot-5"></div>
+          </div>
+        </div>
+
+        <!-- Clues & Guess -->
+        <div class="clues-col">
+          <div class="game-title">Guess The Film</div>
+          <div class="game-sub">
+            Reveal clues one by one — the fewer you use, the higher your score!
+          </div>
+
+          <div class="clues-list" id="clues-list">
+            <div class="clue-card revealed" id="clue-0">
+              <div class="clue-icon">🎭</div>
+              <div class="clue-body">
+                <div class="clue-label">Genre</div>
+                <div class="clue-value">{{ movie.clues.genre }}</div>
+              </div>
+            </div>
+
+            <div class="clue-card locked" id="clue-1">
+              <div class="clue-icon">📅</div>
+              <div class="clue-body">
+                <div class="clue-label">Year</div>
+                <div class="clue-value" id="val-year">???</div>
+              </div>
+            </div>
+
+            <div class="clue-card locked" id="clue-2">
+              <div class="clue-icon">⭐</div>
+              <div class="clue-body">
+                <div class="clue-label">Rating</div>
+                <div class="clue-value" id="val-rating">???</div>
+              </div>
+            </div>
+
+            <div class="clue-card locked" id="clue-3">
+              <div class="clue-icon">🎭</div>
+              <div class="clue-body">
+                <div class="clue-label">Actors</div>
+                <div class="clue-value" id="val-actors">???</div>
+              </div>
+            </div>
+
+            <div class="clue-card locked" id="clue-4">
+              <div class="clue-icon">📖</div>
+              <div class="clue-body">
+                <div class="clue-label">Synopsis Hint</div>
+                <div class="clue-value" id="val-synopsis">???</div>
+              </div>
+            </div>
+
+            <div class="clue-card locked" id="clue-5">
+              <div class="clue-icon">🎬</div>
+              <div class="clue-body">
+                <div class="clue-label">Poster Reveal</div>
+                <div class="clue-value">Full poster revealed!</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="reveal-btn" id="reveal-btn" onclick="revealNextClue()">
+            ▶ Reveal Next Clue
+          </button>
+
+          <!-- Guess -->
+          <div class="guess-section">
+            <div class="guess-label">Your Guess</div>
+            <div class="name-row">
+              <input
+                type="text"
+                id="player-name"
+                placeholder="Your name"
+                style="max-width: 180px"
+              />
+            </div>
+            <div class="guess-row">
+              <input
+                type="text"
+                id="guess-input"
+                placeholder="Type the movie title..."
+                autocomplete="off"
+              />
+              <button class="submit-btn" onclick="submitGuess()">Submit</button>
+            </div>
+            <div class="feedback" id="feedback"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Result Overlay -->
+    <div id="result-overlay">
+      <div class="result-card">
+        <div class="result-emoji" id="result-emoji">🎉</div>
+        <div class="result-title" id="result-title">You Got It!</div>
+        <div class="result-movie" id="result-movie"></div>
+        <div class="result-score" id="result-score">500</div>
+        <div class="result-sub" id="result-sub">points earned</div>
+        <div class="result-btns">
+          <button class="btn-play-again" onclick="location.reload()">
+            Play Again
+          </button>
+          <button
+            class="btn-leaderboard"
+            onclick="
+              closeResult();
+              openLeaderboard();
+            "
+          >
+            Leaderboard
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard Panel -->
+    <div id="leaderboard-panel">
+      <div class="lb-card">
+        <div class="lb-title">🏆 Leaderboard</div>
+        <div id="lb-list">Loading...</div>
+        <button class="close-btn" onclick="closeLeaderboard()">Close</button>
+      </div>
+    </div>
+
+    <script>
+      // Game state
+      const movieId = "{{ movie.movie_id }}";
+      const clueData = {
+        year: "{{ movie.clues.year }}",
+        rating: "{{ movie.clues.rating }} / 10",
+        actors: "{{ movie.clues.actors }}",
+        synopsis: `{{ movie.clues.synopsis }}`,
+      };
+
+      let currentClue = 0; // 0 = genre already shown
+      let gameOver = false;
+      const maxClues = 5; // clues 1-5 are locked initially
+
+      // Blur levels per clue reveal (poster reveal only at clue 5)
+      const blurLevels = [30, 25, 20, 15, 10, 0];
+
+      function revealNextClue() {
+        if (currentClue >= maxClues || gameOver) return;
+        currentClue++;
+
+        const card = document.getElementById(`clue-${currentClue}`);
+        card.classList.remove("locked");
+        card.classList.add("revealed");
+
+        // Update dot
+        document.getElementById(`dot-${currentClue}`).classList.add("active");
+        if (currentClue > 0) {
+          document
+            .getElementById(`dot-${currentClue - 1}`)
+            .classList.add("used");
+        }
+
+        // Fill in clue values
+        if (currentClue === 1)
+          document.getElementById("val-year").textContent = clueData.year;
+        if (currentClue === 2)
+          document.getElementById("val-rating").textContent = clueData.rating;
+        if (currentClue === 3)
+          document.getElementById("val-actors").textContent = clueData.actors;
+        if (currentClue === 4)
+          document.getElementById("val-synopsis").textContent =
+            clueData.synopsis;
+
+        // Update poster blur
+        const blur = blurLevels[currentClue];
+        const img = document.getElementById("poster-img");
+        if (blur === 0) {
+          img.src = `/poster/${movieId}/original`;
+          img.style.filter = "none";
+          document.getElementById("poster-overlay").style.opacity = "0";
+        } else {
+          img.style.filter = `blur(${blur}px) brightness(0.6)`;
+        }
+
+        // Disable if all clues shown
+        if (currentClue >= maxClues) {
+          document.getElementById("reveal-btn").disabled = true;
+          document.getElementById("reveal-btn").textContent =
+            "All Clues Revealed";
+        }
+      }
+
+      async function submitGuess() {
+        if (gameOver) return;
+        const guess = document.getElementById("guess-input").value.trim();
+        const playerName =
+          document.getElementById("player-name").value.trim() || "Anonymous";
+        if (!guess) return;
+
+        const res = await fetch("/api/guess", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            guess,
+            player_name: playerName,
+            clues_used: currentClue + 1,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (data.correct) {
+          gameOver = true;
+          // Reveal poster fully
+          const img = document.getElementById("poster-img");
+          img.src = `/poster/${movieId}/original`;
+          img.style.filter = "none";
+          document.getElementById("poster-overlay").style.opacity = "0";
+
+          showResult(true, null, data.score);
+        } else {
+          const fb = document.getElementById("feedback");
+          if (currentClue >= maxClues) {
+            // Last chance used up
+            gameOver = true;
+            showResult(false, data.answer, 0);
+          } else {
+            fb.textContent = `❌ Not quite! Try again or reveal another clue.`;
+            fb.className = "feedback wrong";
+            document.getElementById("guess-input").value = "";
+            setTimeout(() => (fb.textContent = ""), 3000);
+          }
+        }
+      }
+
+      function showResult(won, answer, score) {
+        const overlay = document.getElementById("result-overlay");
+        document.getElementById("result-emoji").textContent = won ? "🎉" : "😔";
+        document.getElementById("result-title").textContent = won
+          ? "You Got It!"
+          : "Better Luck Next Time";
+        document.getElementById("result-title").className =
+          `result-title ${won ? "win" : "lose"}`;
+        document.getElementById("result-movie").textContent = answer
+          ? `It was: ${answer}`
+          : "";
+        document.getElementById("result-score").textContent = score;
+        document.getElementById("result-sub").textContent = won
+          ? `points earned (used ${currentClue + 1} clue${currentClue !== 0 ? "s" : ""})`
+          : "No points this time";
+        overlay.classList.add("show");
+      }
+
+      function closeResult() {
+        document.getElementById("result-overlay").classList.remove("show");
+      }
+
+      async function openLeaderboard() {
+        document.getElementById("leaderboard-panel").classList.add("show");
+        const res = await fetch("/api/leaderboard");
+        const scores = await res.json();
+        const container = document.getElementById("lb-list");
+        if (!scores.length) {
+          container.innerHTML =
+            '<div style="color:var(--muted);text-align:center;padding:2rem;">No scores yet. Be the first!</div>';
+          return;
+        }
+        container.innerHTML = scores
+          .map(
+            (s, i) => `
+      <div class="lb-row">
+        <div class="lb-rank ${i < 3 ? "top" : ""}">${i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</div>
+        <div class="lb-name">${s.player_name}</div>
+        <div class="lb-clues">${s.clues_used} clue${s.clues_used !== 1 ? "s" : ""}</div>
+        <div class="lb-score">${s.score}</div>
+      </div>
+    `,
+          )
+          .join("");
+      }
+
+      function closeLeaderboard() {
+        document.getElementById("leaderboard-panel").classList.remove("show");
+      }
+
+      // Enter to submit guess
+      document
+        .getElementById("guess-input")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") submitGuess();
+        });
+    </script>
+  </body>
+</html>

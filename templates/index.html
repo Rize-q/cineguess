@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CineGuess — Admin</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styleadmin.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <div>
+        <a href="/" class="logo">Cine<span>Guess</span></a>
+      </div>
+      <nav>
+        <a href="/" class="active">Admin</a>
+        <a href="/game">Play Game</a>
+        <a href="#leaderboard">Leaderboard</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="page-title">Admin Dashboard</div>
+      <div class="page-sub">
+        Search and add movies — the game picks a random film automatically after
+        each correct guess!
+      </div>
+      <div style="margin-bottom: 2rem; margin-top: 1rem">
+        <button
+          onclick="skipMovie()"
+          style="
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-family: &quot;Bebas Neue&quot;, sans-serif;
+            letter-spacing: 0.08em;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+          "
+        >
+          🎲 Pick New Random Movie Now
+        </button>
+      </div>
+
+      {% if error %}
+      <div class="alert">⚠️ {{ error }}</div>
+      {% endif %}
+
+      <!-- Search -->
+      <div class="search-section">
+        <div class="section-label">Search Movie from TMDB</div>
+        <div class="search-row">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="e.g. Inception, The Dark Knight..."
+          />
+          <button onclick="searchMovies()">Search</button>
+        </div>
+        <div id="search-results"></div>
+      </div>
+
+      <!-- Saved Movies -->
+      <div class="movies-section">
+        <div class="section-label">Saved Movies ({{ movies|length }})</div>
+        {% if movies %}
+        <div class="movies-grid">
+          {% for movie in movies %}
+          <div class="saved-card">
+            {% if movie.is_daily %}
+            <div class="daily-badge">⚡ Daily</div>
+            {% endif %} {% if movie.has_poster %}
+            <img
+              src="/poster/{{ movie.movie_id }}/original"
+              alt="{{ movie.title }}"
+              loading="lazy"
+            />
+            {% else %}
+            <div
+              style="
+                aspect-ratio: 2/3;
+                background: var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--muted);
+                font-size: 0.8rem;
+              "
+            >
+              No Poster
+            </div>
+            {% endif %}
+            <div class="saved-card-body">
+              <div class="saved-card-title">{{ movie.title }}</div>
+              <div class="saved-card-meta">
+                {{ movie.clues.year }} · {{ movie.clues.genre }}
+              </div>
+              <div class="btn-row">
+                <span style="font-size: 0.75rem; color: var(--muted)"
+                  >{{ movie.clues.year }}</span
+                >
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          🎬 No movies added yet.<br />Search above and click a movie to add it.
+        </div>
+        {% endif %}
+      </div>
+    </main>
+
+    <div id="toast"></div>
+
+    <script>
+      let searchTimeout;
+
+      const searchInput = document.getElementById("search-input");
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") searchMovies();
+      });
+
+      async function searchMovies() {
+        const q = searchInput.value.trim();
+        if (!q) return;
+
+        const container = document.getElementById("search-results");
+        container.innerHTML =
+          '<div><span class="spinner"></span> Searching...</div>';
+
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const movies = await res.json();
+
+        if (!movies.length) {
+          container.innerHTML =
+            '<div style="color:var(--muted);font-size:0.9rem;margin-top:1rem;">No results found.</div>';
+          return;
+        }
+
+        container.innerHTML = movies
+          .map(
+            (m) => `
+      <div class="movie-card" onclick="addMovie(${m.id}, '${m.title.replace(/'/g, "\\'")}')">
+        <div class="add-badge">+ ADD</div>
+        ${
+          m.poster_path
+            ? `<img src="https://image.tmdb.org/t/p/w200${m.poster_path}" onerror="this.style.background='var(--border)';this.removeAttribute('src')" alt="${m.title}" loading="lazy"/>`
+            : `<div style="aspect-ratio:2/3;background:var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.5rem;">🎬</div>`
+        }
+        <div class="movie-card-info">
+          <div class="movie-card-title">${m.title}</div>
+          <div class="movie-card-year">${m.year}</div>
+        </div>
+      </div>
+    `,
+          )
+          .join("");
+      }
+
+      async function addMovie(id, title) {
+        showToast(`Adding "${title}"...`, "info");
+        const res = await fetch("/api/add-movie", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ movie_id: id }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, "success");
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          showToast(data.message, "error");
+        }
+      }
+
+      async function skipMovie() {
+        const res = await fetch("/api/skip-movie", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, "success");
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          showToast(data.message, "error");
+        }
+      }
+
+      function showToast(msg, type = "info") {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = `show ${type}`;
+        setTimeout(() => (t.className = ""), 3000);
+      }
+    </script>
+  </body>
+</html>
